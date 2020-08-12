@@ -19,9 +19,7 @@ type IndexController struct {
 
 func (c *IndexController) BeforeActivation(b mvc.BeforeActivation) {
 	b.Handle("GET", "/", "Index")
-
 	b.Handle("POST", "/upload", "Upload")
-
 	b.Handle("GET", "/excel/read", "ExcelRead")
 }
 
@@ -30,21 +28,50 @@ func (c *IndexController) ExcelRead() {
 	xlFile, err := xlsx.OpenFile(util.LocalPath() + fileName)
 	if err != nil {
 		fmt.Println(err)
+		c.Ctx.JSON("error")
+		return
 	}
 	var result = make([][]string, 0)
+	//  按名字分组
+	var nameResult = make(map[string][][]string, 0)
+	var names = make([]string, 0)
+	var times = make([]time.Time, 0)
+
 	for _, v := range xlFile.Sheet {
 		if len(v.Rows) == 0 {
 			continue
 		}
 
-		for _, row := range v.Rows {
+		for index, row := range v.Rows {
 			var temp = make([]string, len(row.Cells))
-			for index, cell := range row.Cells {
-				temp[index] = cell.String()
+			for indexI, cell := range row.Cells {
+				temp[indexI] = cell.String()
 			}
 			result = append(result, temp)
+			if index == 0 {
+				continue
+			}
+			if nameResult[row.Cells[0].String()] == nil {
+				var n = make([][]string, 0)
+				nameResult[row.Cells[0].String()] = n
+			}
+			nameResult[row.Cells[0].String()] = append(nameResult[row.Cells[0].String()], temp)
+			for indexI, cell := range row.Cells {
+				if indexI == 0 {
+					names = append(names, cell.String())
+				} else if indexI == 4 {
+					t, _ := time.Parse("01-02-06", cell.String())
+					times = append(times, t)
+				}
+			}
 		}
 	}
+	//for _,v := range nameResult {
+	//	for _,inner := range v {
+	//
+	//
+	//	}
+	//}
 	c.Ctx.JSON(result)
 }
 

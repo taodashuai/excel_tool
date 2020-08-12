@@ -7,13 +7,10 @@ import (
 	"github.com/kataras/iris/mvc"
 	"github.com/kataras/iris/view"
 	"os"
-	"strconv"
 )
 
 func main() {
-	e, _ := strconv.ParseInt(strconv.Itoa(0x00040), 16, 10)
-	fmt.Println(e)
-
+	fmt.Println(LocalPath())
 	app := iris.New()
 	app.RegisterView(ViewHelper())
 	app.StaticWeb("/web", LocalPath()+"web")
@@ -39,5 +36,5 @@ func Route(app *mvc.Application) {
 // 获取项目路径
 func LocalPath() string {
 	path, _ := os.Getwd()
-	return path+"/"
+	return path + "/"
 }
