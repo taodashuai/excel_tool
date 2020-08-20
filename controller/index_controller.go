@@ -31,11 +31,9 @@ func (c *IndexController) ExcelRead() {
 		c.Ctx.JSON("error")
 		return
 	}
-	var result = make([][]string, 0)
 	//  按名字分组
 	var nameResult = make(map[string][][]string, 0)
 	var names = make([]string, 0)
-	var times = make([]time.Time, 0)
 
 	for _, v := range xlFile.Sheet {
 		if len(v.Rows) == 0 {
@@ -47,34 +45,58 @@ func (c *IndexController) ExcelRead() {
 			for indexI, cell := range row.Cells {
 				temp[indexI] = cell.String()
 			}
-			result = append(result, temp)
 			if index == 0 {
 				continue
 			}
-			if nameResult[row.Cells[0].String()] == nil {
+			if nameResult[row.Cells[1].String()] == nil {
 				var n = make([][]string, 0)
-				nameResult[row.Cells[0].String()] = n
+				nameResult[row.Cells[1].String()] = n
 			}
-			nameResult[row.Cells[0].String()] = append(nameResult[row.Cells[0].String()], temp)
+			nameResult[row.Cells[1].String()] = append(nameResult[row.Cells[1].String()], temp)
 			for indexI, cell := range row.Cells {
-				if indexI == 0 {
+				if indexI == 1 {
 					names = append(names, cell.String())
-				} else if indexI == 4 {
-					t, _ := time.Parse("01-02-06", cell.String())
-					times = append(times, t)
 				}
 			}
 		}
 	}
-	//for _,v := range nameResult {
-	//	for _,inner := range v {
-	//
-	//
-	//	}
-	//}
-	c.Ctx.JSON(result)
+	result1 := make([]map[string]interface{}, 0)
+	for name, v0 := range nameResult {
+		temp := make([][]string, 0)
+		ids:=make([]string,0)
+		for i := 0; i < len(v0); i++ {
+			for j := i + 1; j < len(v0); j++ {
+				// 如果出现相同的型号，就将这个型号丢进去
+				if v0[i][2] == v0[j][2] {
+					if !isContain(v0[i][0],ids) {
+						ids=append(ids, v0[i][0])
+						temp = append(temp, v0[i])
+					}
+					if !isContain(v0[j][0],ids) {
+						ids=append(ids, v0[j][0])
+						temp = append(temp, v0[j])
+					}
+				}
+			}
+		}
+		if len(temp) == 0 {
+			continue
+		}
+		m := make(map[string]interface{}, 0)
+		m["name"] = name
+		m["data"] = temp
+		result1 = append(result1, m)
+	}
+	c.Ctx.JSON(result1)
 }
-
+func isContain(a string, all []string) bool {
+	for _, v := range all {
+		if a == v {
+			return true
+		}
+	}
+	return false
+}
 func (c *IndexController) Index() {
 	c.Ctx.View("index.html")
 }
